@@ -8,11 +8,14 @@ Forge Neo、Forge Neo 2、reForge の生成画面に、CPU・RAM・GPU・VRAM・
 
 ## 導入
 
-1. この `Forge-System-Monitor` フォルダーを WebUI の `extensions` にコピーします。
-2. WebUI を再起動します。
-3. 上部の **Settings** タブを開き、左メニューの **Extensions → System Monitor**（システムモニター）を選びます。
+1. [リリース](https://github.com/ukr8b3g-cmyk/Forge-System-Monitor/releases/latest) から `Forge-System-Monitor.zip` をダウンロードして展開します。
+2. 展開した `Forge-System-Monitor` フォルダーを WebUI の `extensions` にコピーします。
+3. WebUI を再起動します。
+4. 上部の **Settings** タブを開き、左メニューの **Extensions → System Monitor**（システムモニター）を選びます。
 
 初期位置は `txt2img` と `img2img` の生成操作欄の下です。EasyPromptSelector がある場合はタグ選択の直下に表示されます。Compact UI では Generate の直下に配置します。
+
+モニターの見出しをクリックすると計測値が折りたたまれます。もう一度クリックすると開きます。生成欄の下でもフローティングでも使えます。
 
 ## 設定
 
@@ -44,11 +47,14 @@ Forge System Monitor displays CPU usage, RAM usage, GPU usage, VRAM usage, and G
 
 ### Installation
 
-1. Copy the `Forge-System-Monitor` folder into the WebUI's `extensions` directory.
-2. Restart the WebUI.
-3. Open the **Settings** tab and select **Extensions → System Monitor** in the left menu.
+1. Download `Forge-System-Monitor.zip` from the [latest release](https://github.com/ukr8b3g-cmyk/Forge-System-Monitor/releases/latest) and extract it.
+2. Copy the extracted `Forge-System-Monitor` folder into the WebUI's `extensions` directory.
+3. Restart the WebUI.
+4. Open the **Settings** tab and select **Extensions → System Monitor** in the left menu.
 
 By default, the monitor appears below the generation controls on `txt2img` and `img2img`. With EasyPromptSelector installed, it appears directly below the tag selector. In Compact UI, it appears below Generate.
+
+Click the monitor heading to collapse the readings. Click it again to expand them. This works in both positions.
 
 ### Settings
 
