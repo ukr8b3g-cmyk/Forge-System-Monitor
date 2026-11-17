@@ -1,4 +1,6 @@
 # Forge System Monitor
+<img width="334" height="221" alt="image" src="https://github.com/user-attachments/assets/29b50cbc-1733-4ae6-a59c-a832fd31e3c2" />
+
 
 Forge Neo と reForge の生成画面に、CPU・RAM・GPU・VRAM・GPU 温度を表示する拡張です。RAM と VRAM は使用率と使用量／総量を表示します。
 
