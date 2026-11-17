@@ -43,7 +43,9 @@
                     line-height: 1.35;
                 }
                 :host([data-corner]) .monitor { box-shadow: 0 .2rem .75rem rgb(0 0 0 / 18%); }
-                .title { font-weight: 600; margin: 0 0 .35rem; }
+                .title { font-weight: 600; cursor: pointer; }
+                .monitor[open] > .title { margin-bottom: .35rem; }
+                :host([data-corner]) .title { pointer-events: auto; }
                 .rows { display: grid; gap: .3rem; }
                 .reading { display: flex; justify-content: space-between; gap: .2rem .4rem; flex-wrap: wrap; }
                 .value { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -58,11 +60,11 @@
                 .detail { margin-top: .3rem;
                     font-size: .82em; overflow-wrap: anywhere; }
             </style>
-            <div class="monitor">
-                <div class="title"></div>
+            <details class="monitor" open>
+                <summary class="title"></summary>
                 <div class="rows"></div>
                 <div class="detail"></div>
-            </div>`;
+            </details>`;
         const root = shadow.querySelector('.rows');
         const rows = new Map();
         for (const field of fields) {
