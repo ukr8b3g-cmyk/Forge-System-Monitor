@@ -1,0 +1,3 @@
+#setting_forge_system_monitor_corner:not([data-fsm-visible="true"]) {
+    display: none !important;
+}
