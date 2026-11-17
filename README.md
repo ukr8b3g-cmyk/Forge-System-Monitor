@@ -11,6 +11,8 @@ Forge Neo と reForge の生成画面に、CPU・RAM・GPU・VRAM・GPU 温度�
 3. 上部の **Settings** タブを開き、左メニューの **Extensions → System Monitor**（システムモニター）を選びます。
 
 初期位置は `txt2img` と `img2img` の生成操作欄の下です。EasyPromptSelector がある場合はタグ選択の直下に表示されます。Compact UI では Generate の直下に配置します。
+<img width="573" height="436" alt="image" src="https://github.com/user-attachments/assets/aacc68a3-ad5b-4799-ab21-c7383fc964fa" />
+
 
 | 設定 | 選択肢・動作 |
 | --- | --- |
