@@ -14,7 +14,7 @@ import psutil
 from .windows_gpu import Adapter, WindowsGpu
 
 NVIDIA_VENDOR = 0x10DE
-GPU_METRICS = {"gpu", "vram", "temp"}
+GPU_FIELDS = {"gpu": "usage", "vram": "vram", "temp": "temperature"}
 MIB = 1024 * 1024
 
 
@@ -48,7 +48,7 @@ def nvidia_snapshot(command):
         if len(row) != 7:
             continue
         uuid, bus, name, usage, used, total, temperature = (item.strip() for item in row)
-        address = re.search(r"([0-9a-f]+):([0-9a-f]+)\.([0-7])$", bus, re.I)
+        address = re.fullmatch(r"(?:[0-9a-f]+:)?([0-9a-f]+):([0-9a-f]+)\.([0-7])", bus, re.I)
         pci = tuple(int(part, 16) for part in address.groups()) if address else None
         if not name or not uuid.startswith("GPU-"):
             continue
@@ -119,7 +119,11 @@ class Sampler:
                         self.windows = WindowsGpu()
                     except (AttributeError, OSError):
                         pass
-                devices = self.windows.adapters() if self.windows else []
+                try:
+                    devices = self.windows.adapters() if self.windows else []
+                except Exception:
+                    # The inventory could not be refreshed; retry on the next request.
+                    return {}
                 self.devices = devices or [a for a, _ in nvidia_snapshot(self.nvidia_command)]
                 self.devices_at = time.monotonic()
                 self.cached_key = None
@@ -139,10 +143,41 @@ class Sampler:
         return max(0.0, min(100.0, 100 * busy / elapsed)) if elapsed > 0 else None
 
     def gpu_readings(self, adapter, metrics):
-        if adapter.luid is not None:
-            return self.windows.sample(adapter, metrics)
-        nvidia = nvidia_snapshot(self.nvidia_command)
-        return next((values for a, values in nvidia if a.uuid == adapter.uuid), {})
+        if adapter.luid is None:
+            nvidia = nvidia_snapshot(self.nvidia_command)
+            return next((values for a, values in nvidia if a.uuid == adapter.uuid), {})
+
+        try:
+            readings = self.windows.sample(adapter, metrics)
+        except Exception:
+            readings = {}
+        if adapter.vendor != NVIDIA_VENDOR or adapter.pci is None or not self.nvidia_command:
+            return readings
+
+        missing = [field for metric, field in GPU_FIELDS.items() if metric in metrics and readings.get(field) is None]
+        # Windows supplies bus/device/function without the domain. Reject ambiguous addresses on either side.
+        if not missing or sum(device.pci == adapter.pci for device in self.devices) != 1:
+            return readings
+        matches = [values for device, values in nvidia_snapshot(self.nvidia_command) if device.pci == adapter.pci]
+        if len(matches) == 1:
+            fallback = matches[0]
+            readings.update({field: fallback[field] for field in missing if fallback.get(field) is not None})
+        return readings
+
+    def gpu_snapshot(self, metrics, selection, reset_counters):
+        try:
+            if reset_counters and self.windows is not None:
+                self.windows.close()
+            if not metrics:
+                return {}
+            devices = self.adapters()
+            adapter = selected_adapter(selection, devices)
+            if adapter is not None:
+                return {"gpu": {"name": adapter.name, **self.gpu_readings(adapter, metrics)}}
+            return {"gpu_status": "select" if devices and selection == "Auto" else "unavailable"}
+        except Exception:
+            # GPU errors must not discard the CPU and RAM readings.
+            return {"gpu_status": "unavailable"} if metrics else {}
 
     def snapshot(self, metrics, selection, period):
         key = (metrics, selection, period)
@@ -150,27 +185,17 @@ class Sampler:
             elapsed = time.monotonic() - self.cached_at
             if key == self.cached_key and elapsed < period:
                 return self.cached
-            if elapsed > period * 3:
+            reset_counters = elapsed > period * 3
+            if reset_counters:
                 # After a paused browser tab, start a fresh utilization interval.
                 self.previous_cpu = None
-                if self.windows is not None:
-                    self.windows.close()
             result = {}
             if "cpu" in metrics:
                 result["cpu"] = self.cpu_usage()
             if "ram" in metrics:
                 memory = psutil.virtual_memory()
                 result["ram"] = {"used": memory.total - memory.available, "total": memory.total}
-            gpu_metrics = metrics & GPU_METRICS
-            if gpu_metrics:
-                devices = self.adapters()
-                adapter = selected_adapter(selection, devices)
-                if adapter is not None:
-                    result["gpu"] = {"name": adapter.name, **self.gpu_readings(adapter, gpu_metrics)}
-                elif devices and selection == "Auto":
-                    result["gpu_status"] = "select"
-                else:
-                    result["gpu_status"] = "unavailable"
+            result.update(self.gpu_snapshot(metrics & GPU_FIELDS.keys(), selection, reset_counters))
             self.cached_key = key
             self.cached = result
             self.cached_at = time.monotonic()
