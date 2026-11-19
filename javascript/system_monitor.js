@@ -86,7 +86,12 @@
             rows.set(field, { row, label, value, progress });
             root.append(row);
         }
-        return { host, title: shadow.querySelector('.title'), detail: shadow.querySelector('.detail'), rows };
+        const details = shadow.querySelector('.monitor');
+        details.addEventListener('toggle', () => {
+            if (details.open) schedulePoll(0);
+            else stopPolling();
+        });
+        return { host, details, title: shadow.querySelector('.title'), detail: shadow.querySelector('.detail'), rows };
     }
 
     function readOptions() {
@@ -188,13 +193,13 @@
     }
 
     function schedulePoll(delay) {
-        if (!config || request || timer) return;
+        if (!config || !view?.details.open || request || timer) return;
         timer = setTimeout(poll, delay);
     }
 
     async function poll() {
         timer = null;
-        if (!config || request) return;
+        if (!config || !view?.details.open || request) return;
         const key = config.requestKey;
         const controller = new AbortController();
         request = controller;
